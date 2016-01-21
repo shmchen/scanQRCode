@@ -10,7 +10,6 @@
 #import "SMScanQRCodeController.h"
 @interface ViewController ()
 
-
 @end
 
 @implementation ViewController
@@ -21,7 +20,11 @@
 }
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    SMScanQRCodeController *scan = [[SMScanQRCodeController alloc] init];
+    SMScanQRCodeController *scan = [SMScanQRCodeController scanQRCodeControllerWithScanSuccessExecute:^(NSString *scanfResult) {
+        NSLog(@"扫描结果是%@",scanfResult);
+        [self dismissViewControllerAnimated:YES completion:nil];
+    }];
+    
     [self presentViewController:scan animated:YES completion:nil];
 
 }

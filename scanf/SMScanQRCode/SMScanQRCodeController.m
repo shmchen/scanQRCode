@@ -22,6 +22,14 @@
 
 @implementation SMScanQRCodeController
 
+//类工厂方法
++ (SMScanQRCodeController *)scanQRCodeControllerWithScanSuccessExecute:(ScanSuccess)scanSuccess
+{
+    SMScanQRCodeController *scanVc = [[SMScanQRCodeController alloc] init];
+    scanVc.scanSuccess = scanSuccess;
+    return scanVc;
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
@@ -156,6 +164,12 @@
 {
     //doSomething.............
     //输出扫描字符串
-    NSLog(@"%@",QRCodestring);
+//    NSLog(@"%@",QRCodestring);
+    
+    //执行block
+    if (self.scanSuccess) {
+        self.scanSuccess(QRCodestring);
+    }
+    
 }
 @end
