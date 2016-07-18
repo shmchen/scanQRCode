@@ -71,4 +71,30 @@
     return [UIImage imageWithCGImage:scaledImage];
 }
 
++ (NSString *)deCodeWithQRCode:(UIImage *)image
+{
+    NSArray *resultArray = [self deCodeWithMultiQRCode:image];
+    return [resultArray lastObject];
+}
+
++ (NSArray<NSString *>*)deCodeWithMultiQRCode:(UIImage *)image
+{
+    //初始化一个监测器
+    CIDetector*detector = [CIDetector detectorOfType:CIDetectorTypeQRCode context:nil options:@{ CIDetectorAccuracy : CIDetectorAccuracyHigh }];
+    
+    //监测到的结果数组
+    NSArray *features = [detector featuresInImage:[CIImage imageWithCGImage:image.CGImage]];
+    
+    if (!features.count) return nil;
+    
+    NSMutableArray *resultArray = [NSMutableArray arrayWithCapacity:features.count];
+    
+    for (CIQRCodeFeature *feature in features) {
+        NSString *scanResult = feature.messageString;
+        [resultArray addObject:scanResult];
+    }
+    
+    return resultArray;
+}
+
 @end

@@ -29,5 +29,22 @@
  */
 + (UIImage *)generateQRCodeWithKey:(NSString *)key ImageSize:(CGSize)size;
 
+/**
+ *  根据二维码图片生成一个解析后的结果字符串
+ *
+ *  @param image 包含一个二维码的图片
+ *
+ *  @return 返回解析出来的字符串，如果不包含信息返回nil
+ */
++ (NSString *)deCodeWithQRCode:(UIImage *)image;
+
+/**
+ *  根据二维码图片生成解析后的结果字符串结果数组
+ *
+ *  @param image 包含多个二维码的图片
+ *
+ *  @return 返回解析出来的字符串数组，如果不包含信息返回nil
+ */
++ (NSArray<NSString *>*)deCodeWithMultiQRCode:(UIImage *)image;
 
 @end

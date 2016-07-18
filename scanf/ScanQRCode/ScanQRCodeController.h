@@ -11,6 +11,13 @@
 typedef void (^ScanSuccess)(ScanQRCodeController *QRCodeVc, NSString *scanfResult);
 @interface ScanQRCodeController : UIViewController
 
+/**
+ *  快速构造方法
+ *
+ *  @param scanSuccess 扫描成功后回调block
+ *
+ *  @return ScanQRCodeController class
+ */
 + (ScanQRCodeController *)scanQRCodeControllerWithHandle:(ScanSuccess)scanSuccess;
 
 @end
