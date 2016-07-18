@@ -6,26 +6,36 @@
 //  Copyright © 2015年 white_screen@163.com. All rights reserved.
 //
 
-#import "SMScanQRCodeController.h"
+#import "ScanQRCodeController.h"
 #import <AVFoundation/AVFoundation.h>
 
-@interface SMScanQRCodeController ()<AVCaptureMetadataOutputObjectsDelegate, UIAlertViewDelegate>//用于处理采集信息的代理
+#define ALERTVIEW_TAG 998
+
+@interface ScanQRCodeController ()<AVCaptureMetadataOutputObjectsDelegate, UIAlertViewDelegate>
+
+//用于处理采集信息的代理
 {
     AVCaptureSession * session;//输入输出的中间桥梁
 }
+
+/**
+ *  扫描成功后执行该block代码
+ */
+@property (copy, nonatomic) ScanSuccess scanSuccess;
 
 //扫描条
 @property (nonatomic, weak) UIImageView *lineImage;
 //是否正在扫描
 @property (nonatomic, assign) BOOL isScanning;
+
 @end
 
-@implementation SMScanQRCodeController
+@implementation ScanQRCodeController
 
 //类工厂方法
-+ (SMScanQRCodeController *)scanQRCodeControllerWithScanSuccessExecute:(ScanSuccess)scanSuccess
++ (ScanQRCodeController *)scanQRCodeControllerWithHandle:(ScanSuccess)scanSuccess
 {
-    SMScanQRCodeController *scanVc = [[SMScanQRCodeController alloc] init];
+    ScanQRCodeController *scanVc = [[ScanQRCodeController alloc] init];
     scanVc.scanSuccess = scanSuccess;
     return scanVc;
 }
@@ -34,11 +44,45 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
 
+    [self setupNav];
+    
+    [self initScan];
 }
 
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
+
+    self.isScanning = YES;
+}
+
+-(void)setupNav{
+    
+    [self.navigationController setNavigationBarHidden:NO animated:NO];
+    self.title = @"二维码/条码";
+    //返回按钮
+    UIButton *backButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 22, 22)];
+    [backButton setImage:[UIImage imageNamed:@"icon_back"] forState:UIControlStateNormal];
+    [backButton addTarget:self action:@selector(back:) forControlEvents:UIControlEventTouchUpInside];
+    UIBarButtonItem *backItem = [[UIBarButtonItem alloc]initWithCustomView:backButton];
+    [self.navigationItem setLeftBarButtonItem:backItem];
+}
+
+- (void)initScan
+{
+    
+    BOOL flag = [self ValidatePermission];
+    
+    if (NO == flag) {
+        
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"请在设备的\"设置-隐私-相机\"中允许访问相机。" message:nil delegate:self cancelButtonTitle:@"取消" otherButtonTitles:@"确定", nil];
+        alert.tag = ALERTVIEW_TAG;
+        alert.delegate = self;
+        [alert show];
+        
+        return;
+    }
+    
     //添加扫描框
     UIImageView *imageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"scanning"]];
     [self.view addSubview:imageView];
@@ -99,21 +143,35 @@
     
     //开始捕获
     [session startRunning];
-    self.isScanning = YES;
-
 }
 
-- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+// 验证权限
+- (BOOL)ValidatePermission
 {
+    AVAuthorizationStatus authStatus = [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
 
-    if (!self.isScanning) {
-        //重新开始捕获
-        [session startRunning];
-        //重启扫描条动画
-        [self resumeLayer:self.lineImage.layer];
-        self.isScanning = YES;
+    if (authStatus == AVAuthorizationStatusAuthorized) {
+        return YES;
     }
+    
+    return NO;
 }
+
+-(void)back:(id)sender{
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+//- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+//{
+//
+//    if (!self.isScanning) {
+//        //重新开始捕获
+//        [session startRunning];
+//        //重启扫描条动画
+//        [self resumeLayer:self.lineImage.layer];
+//        self.isScanning = YES;
+//    }
+//}
 
 #pragma mark - 扫描结果的代理方法
 -(void)captureOutput:(AVCaptureOutput *)captureOutput didOutputMetadataObjects:(NSArray *)metadataObjects fromConnection:(AVCaptureConnection *)connection{
@@ -135,6 +193,18 @@
 #pragma mark - alertView的代理方法
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
+    
+    if (ALERTVIEW_TAG == alertView.tag && buttonIndex == 1) {
+        
+        NSURL *settingUrl = [NSURL URLWithString:@"prefs:root=com.lawyee.wenshuapp"];
+
+        // 打开APP相关隐私设置
+        if ([[UIApplication sharedApplication] canOpenURL:settingUrl
+            ]) {
+            [[UIApplication sharedApplication] openURL:settingUrl];
+        }
+    }
+    
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
@@ -158,18 +228,54 @@
     layer.beginTime = timeSincePause;
 }
 
+#pragma mark - 播放音效
+/**
+ *  播放音效文件
+ *
+ *  @param name 音频文件名称
+ */
+-(void)playSoundEffect:(NSString *)name{
+    NSString *audioFile=[[NSBundle mainBundle] pathForResource:name ofType:nil];
+    NSURL *fileUrl=[NSURL fileURLWithPath:audioFile];
+    //1.获得系统声音ID
+    SystemSoundID soundID=0;
+    /**
+     * inFileUrl:音频文件url
+     * outSystemSoundID:声音id（此函数会将音效文件加入到系统音频服务中并返回一个长整形ID）
+     */
+    AudioServicesCreateSystemSoundID((__bridge CFURLRef)(fileUrl), &soundID);
+    //如果需要在播放完之后执行某些操作，可以调用如下方法注册一个播放完成回调函数
+    AudioServicesAddSystemSoundCompletion(soundID, NULL, NULL, soundCompleteCallback, NULL);
+    //2.播放音频
+    AudioServicesPlaySystemSound(soundID);//播放音效
+    //    AudioServicesPlayAlertSound(soundID);//播放音效并震动
+}
+
+/**
+ *  播放完成回调函数
+ *
+ *  @param soundID    系统声音ID
+ *  @param clientData 回调时传递的数据
+ */
+void soundCompleteCallback(SystemSoundID soundID,void * clientData){
+    NSLog(@"播放完成...");
+}
+
 #pragma mark - 拿到数据可以在该方法doSomething.............
 //获取到二维码信息
 - (void)getQRCodestring:(NSString *)QRCodestring
 {
     //doSomething.............
     //输出扫描字符串
-//    NSLog(@"%@",QRCodestring);
+    NSLog(@"%@",QRCodestring);
+
+    // 播放音效
+    [self playSoundEffect:@"qrcode_found.wav"];
     
     //执行block
     if (self.scanSuccess) {
-        self.scanSuccess(QRCodestring);
+        self.scanSuccess(self, QRCodestring);
     }
-    
+
 }
 @end

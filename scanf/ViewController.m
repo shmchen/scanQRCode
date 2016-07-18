@@ -7,7 +7,7 @@
 //
 
 #import "ViewController.h"
-#import "SMScanQRCodeController.h"
+#import "ScanQRCodeController.h"
 @interface ViewController ()
 
 @end
@@ -20,13 +20,27 @@
 }
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    SMScanQRCodeController *scan = [SMScanQRCodeController scanQRCodeControllerWithScanSuccessExecute:^(NSString *scanfResult) {
-        NSLog(@"扫描结果是%@",scanfResult);
-        [self dismissViewControllerAnimated:YES completion:nil];
+    __weak typeof(self) weakSelf = self;
+    ScanQRCodeController *scanQRCodeVc = [ScanQRCodeController scanQRCodeControllerWithHandle:^(ScanQRCodeController *QRCodeVc, NSString *scanfResult) {
+        
+        [weakSelf getScanfResult:scanfResult ScanQRCodeController:QRCodeVc];
     }];
+
     
-    [self presentViewController:scan animated:YES completion:nil];
+    [self presentViewController:scanQRCodeVc animated:YES completion:nil];
 
 }
+
+#pragma mark - 处理扫描二维码的结果
+- (void)getScanfResult:(NSString *)scanfResultStr ScanQRCodeController:(UIViewController *)QRCodeVc
+{
+    
+    [QRCodeVc dismissViewControllerAnimated:YES completion:^{
+        NSLog(@"扫描结果是%@",scanfResultStr);
+    }];
+    
+    
+}
+
 
 @end
