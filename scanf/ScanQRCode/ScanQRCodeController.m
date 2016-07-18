@@ -126,7 +126,7 @@
     [session addInput:input];
     [session addOutput:output];
     //设置扫码支持的编码格式(如下设置条形码和二维码兼容)
-    output.metadataObjectTypes=@[AVMetadataObjectTypeQRCode,AVMetadataObjectTypeEAN13Code, AVMetadataObjectTypeEAN8Code, AVMetadataObjectTypeCode128Code];
+    output.metadataObjectTypes=@[AVMetadataObjectTypeQRCode, AVMetadataObjectTypeCode93Code, AVMetadataObjectTypeCode39Code,AVMetadataObjectTypeEAN13Code, AVMetadataObjectTypeEAN8Code, AVMetadataObjectTypeCode128Code];
     
     //设置可扫描区域
     CGFloat x = (screenWH.height - imageSize.height) / 2 / screenWH.height;
